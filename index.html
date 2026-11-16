@@ -1,0 +1,906 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Marisol's Board Room</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f2f4f7; --panel:#ffffff; --ink:#1b1f27; --muted:#5e6675; --line:#dfe3ea;
+  --teal:#1f5fd1; --teal-l:#dde8fc; --chili:#d63a2a; --chili-l:#fcdfdb;
+  --mari:#f4b521; --mari-l:#fef1cc; --pink:#0e9a74; --pink-l:#d4f1e7;
+  --green:#14833f; --green-l:#dbf3e3; --red:#c22a2f; --red-l:#fde2e3;
+  --purple:#7c3aed; --purple-l:#ede5fd;
+  --r:16px;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.35 DM Sans,system-ui,sans-serif;display:flex;flex-direction:column;overflow:hidden}
+@media (max-height:600px),(max-width:1100px){body{overflow:auto}}
+h1,h2,h3{font-family:Bricolage Grotesque,Georgia,serif;margin:0;line-height:1.1}
+h2{font-size:20px} h3{font-size:15px}
+button{font:inherit;cursor:pointer}
+input,textarea,select{font:inherit;color:inherit}
+.picado{height:10px;flex:none;background:repeating-linear-gradient(-45deg,var(--chili) 0 12px,var(--mari) 12px 24px)}
+.picado.b2{display:none}
+header{display:flex;align-items:center;gap:14px;padding:6px 14px 6px;flex:none}
+.brand{display:flex;align-items:center;gap:10px;min-width:230px}
+.brand .logo{width:34px;height:34px;border-radius:10px;background:var(--ink);color:var(--mari);color:#fff;display:grid;place-items:center;font:800 18px Bricolage Grotesque,serif}
+.brand small{display:block;color:var(--muted);font-size:11px;letter-spacing:.04em;text-transform:uppercase}
+nav{display:flex;gap:4px;flex:1}
+nav button{border:0;background:transparent;padding:8px 12px;border-radius:999px;font-weight:600;color:var(--muted);display:flex;align-items:center;gap:6px}
+nav button[aria-selected=true]{background:var(--ink);color:#fff;box-shadow:0 3px 0 var(--mari)}
+nav button:disabled{opacity:.4;cursor:not-allowed}
+nav .n{display:inline-grid;place-items:center;width:18px;height:18px;border-radius:50%;background:var(--line);font-size:11px;color:var(--ink)}
+nav button[aria-selected=true] .n{background:var(--mari)}
+.hud{display:flex;gap:8px;align-items:center}
+.chip{background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:4px 10px;font-size:12px;font-weight:600;white-space:nowrap}
+.iconbtn{border:1px solid var(--line);background:var(--panel);border-radius:999px;width:32px;height:32px}
+main{flex:1;min-height:0;padding:4px 14px 12px}
+.view{display:none;height:100%;min-height:0;gap:12px}
+.view.active{display:grid;grid-template-rows:minmax(0,1fr)}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:12px;min-height:0;min-width:0}
+.muted{color:var(--muted)} .small{font-size:12px}
+.btn{border:1px solid var(--line);background:#fff;border-radius:999px;padding:7px 14px;font-weight:600}
+.btn.primary{background:var(--chili);border-color:var(--chili);color:#fff}
+.btn.dark{background:var(--ink);border-color:var(--ink);color:#fff}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn.sm{padding:4px 10px;font-size:12px}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.field{display:flex;flex-direction:column;gap:2px;font-size:12px;font-weight:600}
+.field input{width:120px;border:1.5px solid var(--line);border-radius:8px;padding:5px 8px;background:#fff;font-weight:500}
+.field input.ok{border-color:var(--green);background:var(--green-l)}
+.field input.bad{border-color:var(--red);background:var(--red-l)}
+table{border-collapse:collapse;width:100%}
+td,th{padding:4px 6px;border-bottom:1px solid var(--line);text-align:left;font-size:13px}
+th{font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);font-weight:600}
+td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
+.pill{display:inline-block;border-radius:999px;padding:2px 8px;font-size:11px;font-weight:700}
+.pill.ok{background:var(--green-l);color:var(--green)} .pill.bad{background:var(--red-l);color:var(--red)} .pill.warn{background:var(--mari-l);color:#92400e}
+canvas{display:block;width:100%;height:100%}
+.plot{position:relative;min-height:0}
+.toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%) translateY(30px);background:var(--ink);color:#fff;padding:10px 16px;border-radius:999px;font-weight:600;opacity:0;transition:.25s;pointer-events:none;z-index:50}
+.toast.show{opacity:1;transform:translateX(-50%)}
+.cat-price{--c:var(--teal);--cl:var(--teal-l)} .cat-food{--c:var(--chili);--cl:var(--chili-l)}
+.cat-energy{--c:var(--purple);--cl:var(--purple-l)} .cat-mkt{--c:var(--pink);--cl:var(--pink-l)}
+
+/* ---------- CASE ---------- */
+#v-case{grid-template-columns:1.25fr 1fr}
+.letter{background:#fff;border-top:6px solid var(--mari);border-radius:var(--r);border:1px solid var(--line);padding:16px 20px;position:relative;overflow:hidden;display:flex;flex-direction:column;gap:8px}
+.letter p{margin:0}
+.letter .sig{font-family:Bricolage Grotesque,serif;font-style:italic;font-size:16px}
+.stamp{position:absolute;right:16px;top:14px;transform:rotate(-4deg);border:2px solid var(--ink);color:var(--ink);border-radius:8px;padding:2px 8px;font:700 11px DM Sans,system-ui,sans-serif;letter-spacing:.08em}
+.facts td:last-child{text-align:right;font-weight:600}
+.gate{display:flex;flex-direction:column;gap:10px}
+.eqbox{background:var(--mari-l);border-radius:10px;padding:8px 10px;font-size:13px}
+
+/* ---------- EXPERTS ---------- */
+#v-experts{grid-template-columns:190px 1fr}
+#v-experts.picking{grid-template-columns:1fr}
+#picker{flex-direction:column;gap:14px;justify-content:center;max-width:1100px;margin:0 auto;width:100%}
+.roles{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.rolecard{border:2px solid var(--line);border-top:8px solid var(--c);background:var(--panel);border-radius:14px;padding:14px;text-align:left;display:flex;flex-direction:column;gap:8px;min-height:190px}
+.rolecard:hover{border-color:var(--c);background:var(--cl)}
+.rolecard h3{font-size:18px}
+.rolecard .q{font-size:13px}
+.rolecard .opts{font-size:12px;color:var(--muted);margin-top:auto}
+.boardpick{border:2px dashed var(--ink);background:#fff;border-radius:14px;padding:12px 16px;text-align:left;display:flex;justify-content:space-between;align-items:center;gap:12px}
+.teamnav button:disabled{opacity:.5;cursor:not-allowed;background:repeating-linear-gradient(45deg,var(--panel),var(--panel) 6px,#eef1f5 6px,#eef1f5 12px)}
+.modechip{font-size:11px;font-weight:700;border-radius:999px;padding:3px 8px;background:var(--ink);color:#fff;align-self:flex-start}
+.findings td,.findings th{font-size:12.5px;padding:4px 6px}
+.ftabs{display:flex;gap:4px}
+.ftabs button{border:1px solid var(--line);background:var(--panel);border-radius:999px;padding:3px 10px;font-weight:600;font-size:12px}
+.ftabs button[aria-selected=true]{background:var(--ink);color:#fff;border-color:var(--ink)}
+.teamnav{display:flex;flex-direction:column;gap:6px}
+.teamnav button{text-align:left;border:1.5px solid var(--line);background:var(--panel);border-radius:10px;padding:8px 10px;display:flex;flex-direction:column;gap:2px}
+.teamnav button b{font-size:13px} .teamnav button span{font-size:11px;color:var(--muted)}
+.teamnav button[aria-selected=true]{border-color:var(--c);background:var(--cl)}
+.teamnav .prog{font-size:11px;font-weight:700;color:var(--c)}
+.team{display:none;height:100%;grid-template-columns:1fr 1.05fr;gap:12px;min-height:0}
+.team.active{display:grid}
+.team .left{display:flex;flex-direction:column;gap:8px;min-height:0}
+.team .left .plot{flex:1;min-height:120px}
+.role{font-size:11px;text-transform:uppercase;letter-spacing:.06em;font-weight:700;color:var(--c)}
+.cards{display:flex;flex-direction:column;gap:8px;min-height:0}
+.ocard{border:1.5px solid var(--line);border-left:5px solid var(--c);border-radius:10px;padding:8px 10px;background:#fff;display:flex;flex-direction:column;gap:6px}
+.ocard.done{background:var(--cl)}
+.ocard .top{display:flex;justify-content:space-between;gap:6px;align-items:baseline}
+.ocard .top b{font-size:14px}
+.ocard .desc{font-size:12px;color:var(--muted)}
+.ocard .row{gap:6px;align-items:flex-end}
+.ocard .field input{width:104px}
+.warm{background:var(--mari-l);border-radius:10px;padding:8px 10px;display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap;font-size:12px}
+
+/* ---------- BOARD ---------- */
+#v-board{grid-template-columns:270px 1fr 290px}
+.menu{display:flex;flex-direction:column;gap:4px;overflow:hidden;padding:10px}
+.menu > div{gap:3px !important}
+.menu h4{margin:2px 0 0;font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--c)}
+.mcard{border:1.5px solid var(--line);border-left:5px solid var(--c);background:#fff;border-radius:8px;padding:3px 8px;line-height:1.15;text-align:left;display:flex;justify-content:space-between;align-items:center;gap:6px;width:100%}
+.mcard .lab{font-weight:600;font-size:12px}
+.mcard .eff{font-size:10.5px;color:var(--muted)}
+.mcard.in{background:var(--cl);border-color:var(--c)}
+.mcard.locked{opacity:.45;cursor:not-allowed;background:repeating-linear-gradient(45deg,#fff,#fff 6px,#eef1f5 6px,#eef1f5 12px)}
+.center{display:grid;grid-template-rows:auto 1fr 132px;gap:10px;min-height:0}
+.subtabs{display:flex;gap:4px}
+.subtabs button{border:1px solid var(--line);background:var(--panel);border-radius:999px;padding:4px 12px;font-weight:600;font-size:12px}
+.subtabs button[aria-selected=true]{background:var(--ink);color:#fff;border-color:var(--ink)}
+.bigplot{display:flex;flex-direction:column;gap:6px}
+.bigplot .plot{flex:1}
+.legend{display:flex;gap:14px;font-size:12px;color:var(--muted);flex-wrap:wrap}
+.legend i{display:inline-block;width:18px;height:3px;border-radius:2px;vertical-align:middle;margin-right:5px}
+.bottom3{display:grid;grid-template-columns:1.2fr 1fr;gap:10px;min-height:0}
+.bottom3 .panel{display:flex;flex-direction:column;gap:4px;padding:8px 10px}
+.bottom3 .plot{flex:1}
+.side{display:flex;flex-direction:column;gap:8px;min-height:0}
+.side .panel{padding:10px}
+.slots{display:flex;flex-direction:column;gap:6px}
+.slot{border:1.5px dashed var(--line);border-radius:8px;padding:4px 8px;font-size:12.5px;display:flex;justify-content:space-between;align-items:center;min-height:30px;color:var(--muted)}
+.slot.filled{border-style:solid;border-left:5px solid var(--c);color:var(--ink);background:var(--cl);font-weight:600}
+.slot.locked{background:repeating-linear-gradient(45deg,transparent,transparent 6px,#eef1f5 6px,#eef1f5 12px)}
+.slot button{border:0;background:transparent;font-size:16px;line-height:1;color:var(--muted)}
+.rules{display:flex;flex-direction:column;gap:3px;font-size:12px}
+.rules div{display:flex;gap:6px;align-items:center}
+.rules .dot{width:14px;height:14px;border-radius:50%;display:inline-grid;place-items:center;font-size:10px;color:#fff;font-weight:700;flex:none}
+.rules .ok .dot{background:var(--green)} .rules .no .dot{background:var(--red)} .rules .na .dot{background:#b8bfcc}
+.predict{display:flex;flex-direction:column;gap:6px}
+.predict .row .field input{width:118px}
+.results{display:grid;grid-template-columns:1fr 1fr 1fr;gap:5px}
+.stat{background:#fff;border:1px solid var(--line);border-radius:8px;padding:4px 7px}
+.stat .k{font-size:9.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);font-weight:600}
+.stat .v{font:700 14.5px DM Sans,system-ui,sans-serif;font-variant-numeric:tabular-nums}
+.stat .v.pos{color:var(--green)} .stat .v.neg{color:var(--red)}
+.stat.wide{grid-column:span 2}
+.hidden-num{color:#b8bfcc !important;letter-spacing:.1em}
+.banner{background:var(--purple-l);color:var(--purple);border-radius:9px;padding:6px 9px;font-size:12px;font-weight:600}
+#logwrap{overflow:auto}
+
+/* ---------- MONTHS ---------- */
+#v-months{grid-template-columns:1fr 380px 1fr}
+.timeline{display:flex;gap:6px;justify-content:space-between}
+.mdot{flex:1;text-align:center;font-size:11px;color:var(--muted);font-weight:600}
+.mdot .c{width:30px;height:30px;margin:0 auto 3px;border-radius:50%;border:2px solid var(--line);display:grid;place-items:center;font-weight:700;background:#fff;color:var(--ink)}
+.mdot.done .c{background:var(--green);border-color:var(--green);color:#fff}
+.mdot.loss .c{background:var(--red);border-color:var(--red);color:#fff}
+.mdot.now .c{border-color:var(--mari);box-shadow:0 0 0 3px var(--mari-l)}
+.curve{border-radius:14px;padding:14px;background:#fff;border:2px solid var(--ink);display:flex;flex-direction:column;gap:8px;position:relative}
+.curve .tag{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--chili)}
+.curve h2{font-size:22px}
+.curve.calm{border-color:var(--line)}
+.vars{display:flex;gap:6px;flex-wrap:wrap}
+.vars button{border:1.5px solid var(--line);background:#fff;border-radius:8px;padding:4px 10px;font-weight:700}
+.vars button.ok{background:var(--green-l);border-color:var(--green);color:var(--green)}
+.vars button.bad{background:var(--red-l);border-color:var(--red);color:var(--red)}
+.monthcol{display:flex;flex-direction:column;gap:10px;min-height:0}
+.closed{background:var(--red-l);color:var(--red);border-radius:10px;padding:10px;font-weight:700}
+.stars{color:var(--mari);letter-spacing:1px}
+
+/* ---------- REPORT ---------- */
+#v-report.active{grid-template-columns:330px 1fr 1fr;grid-template-rows:minmax(0,1fr) 150px}
+#rp-plan td{padding:3px 4px;font-size:12.5px}
+#v-report textarea{width:100%;height:100%;resize:none;border:1.5px solid var(--line);border-radius:8px;padding:8px;font-size:13px}
+.notes{grid-column:1/-1;display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.notes .panel{display:flex;flex-direction:column;gap:4px}
+body.present header nav, body.present .hud{visibility:hidden}
+
+/* modal */
+.modal{position:fixed;inset:0;background:rgba(43,33,24,.45);display:none;place-items:center;z-index:40}
+.modal.show{display:grid}
+.modal .box{background:var(--panel);border-radius:16px;padding:18px;width:min(520px,92vw);display:flex;flex-direction:column;gap:10px}
+.modal textarea{width:100%;height:110px;border:1.5px solid var(--line);border-radius:8px;padding:8px;resize:none}
+.tpanel{position:fixed;right:14px;top:58px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px;display:none;flex-direction:column;gap:8px;z-index:30;width:260px;box-shadow:0 10px 30px rgba(0,0,0,.12)}
+.tpanel.show{display:flex}
+.tpanel label{display:flex;gap:8px;align-items:center;font-size:13px}
+</style>
+</head>
+<body>
+<div class="picado"></div><div class="picado b2"></div>
+<header>
+  <div class="brand"><div class="logo">M</div><div><h3>Marisol's Board Room</h3><small>Practice case · A.2I · A.5C</small></div></div>
+  <nav role="tablist">
+    <button data-tab="case" aria-selected="true"><span class="n">1</span>The Case</button>
+    <button data-tab="experts"><span class="n">2</span>Expert Files</button>
+    <button data-tab="board"><span class="n">3</span>Board Room</button>
+    <button data-tab="report"><span class="n">4</span>Report</button>
+  </nav>
+  <div class="hud">
+    <span class="chip" id="hud-cards">0 / 12 cards</span>
+    <button class="iconbtn" id="tbtn" title="Teacher controls" aria-label="Teacher controls">⚙</button>
+  </div>
+</header>
+<div class="tpanel" id="tpanel">
+  <b>Teacher controls</b>
+  <label><input type="checkbox" id="t-unlock"> Unlock every card and tab</label>
+  <label><input type="checkbox" id="t-nums"> Show answers without calculating</label>
+  <button class="btn sm" id="t-reset">Reset everything</button>
+  <span class="small muted">Settings save on this device.</span>
+</div>
+
+<main>
+<!-- 1 CASE -->
+<section class="view active" id="v-case">
+  <div class="letter">
+    <div class="stamp">CLIENT BRIEF</div>
+    <div class="small muted" style="font-weight:600;letter-spacing:.05em;text-transform:uppercase">Mari's Smash Burgers · Food truck, Oak Cliff</div>
+    <h2>"My truck is losing money. Help me turn it around."</h2>
+    <p>Dear Consultants,</p>
+    <p>My family has run this burger truck for three years. People line up for my double smash burger at lunch. But since my helper's pay and the commissary fee went up, I lose money every month.</p>
+    <p>Last month I sold <b>1,250 burgers</b> at <b>$8.00</b> each. The bun, beef, toppings, and wrapper for one burger cost me <b>$3.00</b>. My fixed bills are <b>$7,500</b> a month no matter how many burgers I sell.</p>
+    <p>I can only handle <b>two changes</b> at a time and spend no more than <b>$1,000</b> up front. And breaking even isn't enough: I need to clear <b>at least $250 a month</b> to save for new tires. What should I do?</p>
+    <p class="sig">— Marisol</p>
+    <p class="small muted" style="margin-top:auto">Marisol and her truck are made up for this lesson. So are all the numbers.</p>
+  </div>
+  <div style="display:grid;grid-template-rows:auto 1fr;gap:12px;min-height:0">
+    <div class="panel">
+      <h3 style="margin-bottom:6px">Fixed bills every month</h3>
+      <table class="facts">
+        <tr><td>Helper pay</td><td>$3,200</td></tr>
+        <tr><td>Truck loan payment</td><td>$1,400</td></tr>
+        <tr><td>Commissary kitchen fee</td><td>$900</td></tr>
+        <tr><td>Parking spot rental</td><td>$600</td></tr>
+        <tr><td>Permits and insurance</td><td>$600</td></tr>
+        <tr><td>Propane for the grill</td><td>$440</td></tr>
+        <tr><td>Generator gas</td><td>$360</td></tr>
+        <tr><td><b>Total fixed costs</b></td><td><b>$7,500</b></td></tr>
+      </table>
+    </div>
+    <div class="panel gate">
+      <div><h3>Prove she's in trouble</h3><div class="small muted">Let x = burgers sold in a month and y = dollars. Write both equations on your handout, solve the system, then check your answers here to open the Expert Files.</div></div>
+      <div class="eqbox">Revenue: y = ____ x &nbsp;&nbsp;·&nbsp;&nbsp; Cost: y = ______ + ____ x</div>
+      <div class="row" style="align-items:flex-end">
+        <label class="field">Break-even point (burgers)<input id="g-be" inputmode="decimal" placeholder="burgers"></label>
+        <label class="field">Profit at 1,250 burgers ($)<input id="g-pr" inputmode="decimal" placeholder="use − for a loss"></label>
+        <button class="btn primary" id="g-check">Check</button>
+      </div>
+      <div id="g-msg" class="small"></div>
+    </div>
+  </div>
+</section>
+
+<!-- 2 EXPERTS -->
+<section class="view" id="v-experts">
+  <div id="picker" style="display:none"></div>
+  <div class="teamnav" id="teamnav"></div>
+  <div id="teams" style="min-height:0"></div>
+</section>
+
+<!-- 3 BOARD -->
+<section class="view" id="v-board">
+  <div class="panel menu" id="menu"></div>
+  <div class="center">
+    <div class="row" style="justify-content:space-between">
+      <div class="subtabs" role="tablist">
+        <button data-sub="graph" aria-selected="true">Break-even graph</button>
+        <button data-sub="log">Package log <span id="logcount"></span></button>
+      </div>
+      <div class="legend"><span><i style="background:var(--teal)"></i>Revenue</span><span><i style="background:var(--chili)"></i>Cost</span><span><i style="background:#b8bfcc"></i>Today</span></div>
+    </div>
+    <div class="panel bigplot" id="sub-graph"><div class="plot"><canvas id="cv-main" aria-label="Revenue and cost lines for the current package"></canvas></div></div>
+    <div class="panel" id="sub-log" style="display:none"><div id="logwrap"></div></div>
+    <div class="bottom3">
+      <div class="panel"><h3>Profit waterfall <span class="small muted" style="font-family:DM Sans">· what each change adds</span></h3><div class="plot"><canvas id="cv-water" aria-label="Waterfall of profit changes"></canvas></div></div>
+      <div class="panel"><h3>Burgers: needed vs. expected</h3><div class="plot"><canvas id="cv-gap" aria-label="Number line comparing break-even burgers and expected burgers"></canvas></div>
+        <div class="plot" style="flex:0 0 38px"><canvas id="cv-burger" aria-label="Where each dollar of the burger price goes"></canvas></div></div>
+    </div>
+  </div>
+  <div class="side">
+    <div class="panel" style="display:flex;flex-direction:column;gap:8px">
+      <div id="updbanner"></div>
+      <div class="row" style="justify-content:space-between"><h3>Your package</h3><span class="small muted" id="slotcount"></span></div>
+      <div class="slots" id="slots"></div>
+      <button class="btn sm" id="petition" style="display:none">✋ Ask Marisol for another change</button>
+      <div class="rules" id="rules"></div>
+    </div>
+    <div class="panel predict" id="predict"></div>
+  </div>
+</section>
+
+<!-- 4 REPORT -->
+<section class="view" id="v-report">
+  <div class="panel" id="rp-plan" style="display:flex;flex-direction:column;gap:8px"></div>
+  <div class="panel" style="display:flex;flex-direction:column;gap:4px"><h3>Break-even for our plan</h3><div class="plot" style="flex:1"><canvas id="cv-rbe"></canvas></div></div>
+  <div class="panel" style="display:flex;flex-direction:column;gap:4px;min-height:0"><h3>Packages we tested</h3><div id="rp-log" style="overflow:auto;min-height:0"></div></div>
+  <div class="notes">
+    <div class="panel"><label for="rp-1"><b>Our recommendation</b> <span class="small muted">What to change first, and why</span></label><textarea id="rp-1" placeholder="Marisol should start with ___ because ___. Our break-even point is ___ burgers, and she expects to sell ___."></textarea></div>
+    <div class="panel"><label for="rp-2"><b>Why not the other packages</b></label><textarea id="rp-2" placeholder="We also tested ___, but it ___. Our plan is better because ___."></textarea></div>
+    <div class="panel"><label for="rp-3"><b>Our weakest assumption</b></label><textarea id="rp-3" placeholder="Our model assumes ___. If that is wrong, ___."></textarea></div>
+  </div>
+</section>
+</main>
+
+<div class="modal" id="modal"><div class="box" id="modalbox"></div></div>
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+"use strict";
+const $ = id => document.getElementById(id);
+const BASE = {p:8, c:3, F:7500, m:1250};
+const CASHMAX = 1000, GOAL = 250;
+const CATS = {
+  price:{name:"Pricing", role:"Pricing Analyst", q:"Is Marisol charging the right price?"},
+  food:{name:"Food Cost", role:"Food Cost Analyst", q:"How can each burger cost less to make?"},
+  energy:{name:"Overhead & Energy", role:"Overhead & Energy Engineer", q:"Which fixed costs can shrink, and which fixes pay for themselves?"},
+  mkt:{name:"Marketing", role:"Marketing Strategist", q:"Can advertising bring in enough burgers to pay for itself?"}
+};
+/* Change cards: price sets p; dc, dF, dm add; cash = one-time cost up front */
+const CARDS = [
+  {id:"p7", cat:"price", label:"Price $7", price:7, dc:0, dF:0, dm:450, cash:0, desc:"Drop the average burger to $7. The survey says she'd sell 1,700 burgers."},
+  {id:"p9", cat:"price", label:"Price $9", price:9, dc:0, dF:0, dm:-190, cash:0, desc:"Raise the average burger to $9. The survey says she'd sell 1,060 burgers."},
+  {id:"p10", cat:"price", label:"Price $10", price:10, dc:0, dF:0, dm:-360, cash:0, desc:"Raise the average burger to $10. The survey says she'd sell 890 burgers."},
+  {id:"waste", cat:"food", label:"Bulk bun deal", dc:-0.20, dF:0, dm:0, cash:400, desc:"Buy buns in bulk from a bakery and freeze them. Buns drop from $0.40 to $0.20 a burger. A chest freezer costs $400."},
+  {id:"supp", cat:"food", label:"New beef supplier", dc:-0.50, dF:0, dm:-20, cash:0, desc:"Beef drops from $1.60 to $1.10 a burger. A few regulars notice: about 20 fewer burgers (1,230)."},
+  {id:"tort", cat:"food", label:"Smaller burgers", dc:-0.60, dF:0, dm:-200, cash:0, desc:"Thinner patties and fewer toppings: food cost drops to $2.40 a burger, but customers notice. About 200 fewer burgers (1,050)."},
+  {id:"cool", cat:"energy", label:"Inverter generator", dc:0, dF:-150, dm:0, cash:2400, desc:"Swap the old gas generator for an efficient inverter generator. Costs $2,400."},
+  {id:"led", cat:"energy", label:"Solar panel", dc:0, dF:-60, dm:0, cash:900, desc:"A roof panel runs the lights and fans. Saves $60 a month on generator gas. Costs $900."},
+  {id:"mon", cat:"energy", label:"Drop the Sunday shift", dc:0, dF:-500, dm:-70, cash:0, desc:"Saves $500 a month in helper pay, propane, and generator gas. Sundays bring in only about 70 burgers a month."},
+  {id:"social", cat:"mkt", label:"Instagram + stamp cards", dc:0, dF:300, dm:90, cash:0, desc:"$300 a month. Similar trucks got about 90 extra burgers a month."},
+  {id:"big", cat:"mkt", label:"Friday night events", dc:0, dF:600, dm:200, cash:0, desc:"$600 a month in fees to park at Friday night markets. About 200 extra burgers a month."},
+  {id:"fly", cat:"mkt", label:"Flyers", dc:0, dF:100, dm:15, cash:0, desc:"$100 a month for flyers at offices and the rec center. About 15 extra burgers."}
+];
+const CARD = Object.fromEntries(CARDS.map(c => [c.id, c]));
+
+
+
+/* ---------- math ---------- */
+function model(ids, effects){
+  let p = BASE.p, c = BASE.c, F = BASE.F, m = BASE.m, cash = 0, one = 0;
+  ids.forEach(id => { const k = CARD[id]; if (k.price) p = k.price; c += k.dc; F += k.dF; m += k.dm; cash += k.cash; });
+  (effects || []).forEach(e => { c += e.dc || 0; F += e.dF || 0; m += e.dm || 0; one += e.one || 0; });
+  c = Math.round(c * 100) / 100;
+  const margin = p - c;
+  const be = margin > 0 ? F / margin : Infinity;
+  const profit = Math.round((margin * m - F + one) * 100) / 100;
+  return {p, c, F, m, cash, one, margin, be, beUp: Math.ceil(be - 1e-9), profit};
+}
+const BASEM = model([]);
+const keyOf = ids => ids.slice().sort().join("+") || "today";
+
+/* answers for expert cards */
+function cardChecks(k){
+  if (k.id === "cool") return [{key:"sav", label:"Monthly savings ($)", ans:150, tol:0.5}, {key:"pay", label:"Payback (months)", ans:16, tol:0.5}];
+  if (k.id === "led") return [{key:"pay", label:"Payback (months)", ans:15, tol:0.5}];
+  if (k.id === "mon") return [{key:"mbe", label:"Sunday break-even (burgers)", ans:100, tol:0.5}, {key:"chg", label:"Change in monthly profit ($)", ans:150, tol:0.5}];
+  const r = model([k.id]);
+  return [{key:"be", label:"Break-even (burgers)", ans:r.beUp, tol:0.5, alt:[Math.round(r.be*10)/10]}, {key:"pr", label:"Profit / month ($)", ans:r.profit, tol:1}];
+}
+const WARM = {
+  price:null,
+  food:{label:"Beef cost per month right now ($)", ans:2000, tol:0.5},
+  energy:{label:"Old generator: gas cost per month ($)", ans:360, tol:0.5},
+  mkt:{label:"Profit from one extra burger ($)", ans:5, tol:0.005}
+};
+
+/* ---------- state ---------- */
+const STORE = "smashburger-boardroom-v1";
+function fresh(){ return {tab:"case", role:null, fpane:"chart", caseOk:false, verified:{}, warm:{}, inputs:{}, team:"price", slots:[], maxSlots:2, petitions:[], revealed:{}, log:[], sub:"graph",
+  plan:null,
+  t:{unlock:false, nums:false}, report:{a:"",b:"",c:""}}; }
+let S;
+try { S = Object.assign(fresh(), JSON.parse(localStorage.getItem(STORE) || "{}")); } catch(e){ S = fresh(); }
+if (S.role && !CATS[S.role]) S.role = null;
+if (S.tab === "months") S.tab = "board";
+function save(){ try { localStorage.setItem(STORE, JSON.stringify(S)); } catch(e){} }
+
+/* ---------- helpers ---------- */
+const fmtN = n => Math.round(n).toLocaleString("en-US");
+const fmt$ = (n, cents) => { const s = n < 0 ? "−" : ""; const a = Math.abs(n); return s + "$" + (cents || (a % 1 && a < 100) ? a.toLocaleString("en-US",{minimumFractionDigits:2, maximumFractionDigits:2}) : Math.round(a).toLocaleString("en-US")); };
+const sgn$ = n => (n > 0 ? "+" : "") + fmt$(n);
+function num(v){ if (v == null) return NaN; v = String(v).replace(/[−–—]/g,"-").replace(/[$,\s]/g,"").replace(/burgers?|months?/gi,""); if (v === "" || v === "-") return NaN; return Number(v); }
+function near(v, ans, tol, alt){ if (isNaN(v)) return false; if (Math.abs(v - ans) <= tol) return true; return (alt||[]).some(a => Math.abs(v - a) <= 0.05); }
+function toast(t){ const e = $("toast"); e.textContent = t; e.classList.add("show"); clearTimeout(toast.h); toast.h = setTimeout(() => e.classList.remove("show"), 2200); }
+function esc(s){ return String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])); }
+const roleDone = () => !!S.role && CARDS.filter(k => k.cat === S.role).every(k => S.verified[k.id]);
+const isVerified = id => S.t.unlock || roleDone() || !!S.verified[id];
+const canSee = key => S.t.nums || !!S.revealed[key];
+function cssv(n){ return getComputedStyle(document.documentElement).getPropertyValue(n).trim(); }
+
+/* ---------- canvas ---------- */
+function setup(cv){
+  const r = cv.getBoundingClientRect(), d = window.devicePixelRatio || 1;
+  if (!r.width || !r.height) return null;
+  cv.width = Math.round(r.width * d); cv.height = Math.round(r.height * d);
+  const g = cv.getContext("2d"); g.setTransform(d,0,0,d,0,0); g.clearRect(0,0,r.width,r.height);
+  g.font = "11px DM Sans, system-ui, sans-serif"; g.textBaseline = "middle";
+  return {g, w:r.width, h:r.height};
+}
+function axes(ctx, o){
+  const {g, w, h} = ctx, L = o.L || 52, R = o.R || 12, T = o.T || 10, B = o.B || 26;
+  const X = x => L + (x - o.x0) / (o.x1 - o.x0) * (w - L - R);
+  const Y = y => h - B - (y - o.y0) / (o.y1 - o.y0) * (h - T - B);
+  g.strokeStyle = "#e7eaf0"; g.fillStyle = "#5e6675"; g.lineWidth = 1;
+  for (let x = o.x0; x <= o.x1 + 1e-9; x += o.dx){ g.beginPath(); g.moveTo(X(x), T); g.lineTo(X(x), h - B); g.stroke(); g.textAlign = "center"; g.fillText(o.fx ? o.fx(x) : fmtN(x), X(x), h - B + 12); }
+  for (let y = o.y0; y <= o.y1 + 1e-9; y += o.dy){ g.beginPath(); g.moveTo(L, Y(y)); g.lineTo(w - R, Y(y)); g.stroke(); g.textAlign = "right"; g.fillText(o.fy ? o.fy(y) : fmtN(y), L - 6, Y(y)); }
+  if (o.xl){ g.textAlign = "right"; g.fillText(o.xl, w - R, h - B - 8); }
+  if (o.yl){ g.textAlign = "left"; g.fillText(o.yl, L + 6, T + 6); }
+  return {X, Y, L, R, T, B};
+}
+function line(g, A, f, x0, x1, col, wdt, dash){
+  g.save(); g.strokeStyle = col; g.lineWidth = wdt || 2.5; if (dash) g.setLineDash(dash);
+  g.beginPath(); g.moveTo(A.X(x0), A.Y(f(x0))); g.lineTo(A.X(x1), A.Y(f(x1))); g.stroke(); g.restore();
+}
+function label(g, x, y, t, col, bg, align){
+  g.save(); g.font = "600 11.5px DM Sans, system-ui"; const w = g.measureText(t).width + 10;
+  let lx = align === "right" ? x - w : align === "center" ? x - w/2 : x;
+  g.fillStyle = bg || "rgba(255,255,255,.92)"; g.beginPath(); g.roundRect ? g.roundRect(lx, y - 10, w, 20, 6) : g.rect(lx, y - 10, w, 20); g.fill();
+  g.fillStyle = col; g.textAlign = "left"; g.fillText(t, lx + 5, y + 0.5); g.restore();
+}
+function breakEvenGraph(cv, cur, opts){
+  const ctx = setup(cv); if (!ctx) return; const {g} = ctx;
+  const A = axes(ctx, {x0:0, x1:2400, dx:400, y0:0, y1:25000, dy:5000, fy:y => "$" + (y/1000) + "k", xl:"burgers sold per month", yl:"dollars"});
+  if (opts.base){ line(g, A, x => BASE.p * x, 0, 2400, "#b8bfcc", 1.5, [5,4]); line(g, A, x => BASE.F + BASE.c * x, 0, 2400, "#b8bfcc", 1.5, [5,4]); }
+  const R = x => cur.p * x, C = x => cur.F + cur.c * x;
+  /* profit/loss band at expected burgers */
+  const m = Math.max(0, Math.min(2400, cur.m));
+  g.save(); g.setLineDash([4,4]); g.strokeStyle = "#5e6675"; g.beginPath(); g.moveTo(A.X(m), A.Y(0)); g.lineTo(A.X(m), A.Y(25000)); g.stroke(); g.restore();
+  const prof = R(m) - C(m);
+  g.save(); g.strokeStyle = prof >= 0 ? cssv("--green") : cssv("--red"); g.lineWidth = 9; g.globalAlpha = .55; g.lineCap = "round";
+  g.beginPath(); g.moveTo(A.X(m), A.Y(R(m))); g.lineTo(A.X(m), A.Y(C(m))); g.stroke(); g.restore();
+  /* shade loss/profit regions */
+  if (isFinite(cur.be) && cur.be > 0 && cur.be < 2400){
+    g.save(); g.globalAlpha = .08; g.fillStyle = cssv("--red"); g.beginPath();
+    g.moveTo(A.X(0), A.Y(R(0))); g.lineTo(A.X(cur.be), A.Y(R(cur.be))); g.lineTo(A.X(0), A.Y(C(0))); g.fill();
+    g.fillStyle = cssv("--green"); g.beginPath(); g.moveTo(A.X(cur.be), A.Y(R(cur.be))); g.lineTo(A.X(2400), A.Y(R(2400))); g.lineTo(A.X(2400), A.Y(C(2400))); g.fill(); g.restore();
+  }
+  line(g, A, C, 0, 2400, cssv("--chili"), 3);
+  line(g, A, R, 0, 2400, cssv("--teal"), 3);
+  const show = opts.show;
+  label(g, A.X(m) + 6, A.Y(25000) + 14, "expected: " + fmtN(cur.m) + " burgers", "#3d4452");
+  label(g, A.X(m) + 8, A.Y((R(m) + C(m)) / 2), (prof >= 0 ? "profit " : "loss ") + (show ? fmt$(Math.abs(prof)) : "?"), prof >= 0 ? cssv("--green") : cssv("--red"));
+  if (isFinite(cur.be) && cur.be > 0 && cur.be < 2400){
+    g.fillStyle = cssv("--ink"); g.beginPath(); g.arc(A.X(cur.be), A.Y(R(cur.be)), 5.5, 0, 7); g.fill();
+    g.fillStyle = "#fff"; g.beginPath(); g.arc(A.X(cur.be), A.Y(R(cur.be)), 2.5, 0, 7); g.fill();
+    label(g, A.X(cur.be) - 10, A.Y(R(cur.be)) - 18, "break-even " + (show ? "(" + fmtN(Math.ceil(cur.be - 1e-9)) + ", " + fmt$(R(cur.be)) + ")" : "(?, ?)"), cssv("--ink"), null, "right");
+  }
+  if (opts.eq && show){
+    const yR = Math.min(24000, R(2350)), yC = C(2350);
+    label(g, A.X(2390), A.Y(yR) + (yR > yC ? -12 : 14), "y = " + cur.p + "x", cssv("--teal"), null, "right");
+    label(g, A.X(2390), A.Y(yC) + (yR > yC ? 14 : -12), "y = " + fmtN(cur.F) + " + " + cur.c.toFixed(2) + "x", cssv("--chili"), null, "right");
+  }
+}
+
+/* ---------- tabs ---------- */
+const TABS = ["case","experts","board","report"];
+function tabOpen(t){
+  if (S.t.unlock) return true;
+  if (t === "case") return true;
+  if (t === "experts") return S.caseOk;
+  if (t === "board") return S.caseOk && roleDone();
+  if (t === "report") return !!S.plan;
+}
+function show(t){
+  if (!tabOpen(t)) t = "case";
+  S.tab = t; save();
+  document.querySelectorAll("nav button").forEach(b => { b.setAttribute("aria-selected", b.dataset.tab === t); b.disabled = !tabOpen(b.dataset.tab); b.title = b.dataset.tab === "board" && b.disabled && S.caseOk ? "Verify all three options for your role to open the Board Room" : ""; });
+  document.querySelectorAll(".view").forEach(v => v.classList.toggle("active", v.id === "v-" + t));
+  render();
+}
+document.querySelectorAll("nav button").forEach(b => b.addEventListener("click", () => show(b.dataset.tab)));
+
+/* ---------- 1 CASE ---------- */
+$("g-check").addEventListener("click", () => {
+  const be = num($("g-be").value), pr = num($("g-pr").value);
+  const okBe = near(be, 1500, 0.5), okPr = near(pr, -1250, 0.5);
+  $("g-be").className = okBe ? "ok" : "bad"; $("g-pr").className = okPr ? "ok" : "bad";
+  let msg = "";
+  if (!okBe) msg += isNaN(be) ? "Enter a break-even number. " : "Break-even: set revenue equal to cost and solve for x. ";
+  if (!okPr) msg += near(pr, 1250, 0.5) ? "Profit: right size, but is she making money or losing it? Use a minus sign for a loss. " : isNaN(pr) ? "Enter her profit at 1,250 burgers. " : "Profit: revenue at 1,250 burgers minus cost at 1,250 burgers. ";
+  if (okBe && okPr){ S.caseOk = true; S.inputs.gbe = $("g-be").value; S.inputs.gpr = $("g-pr").value; save();
+    $("g-msg").innerHTML = '<span class="pill ok">Correct</span> She needs 1,500 burgers but sells 1,250: she is <b>250 burgers short</b> and loses <b>$1,250 a month</b>. And her goal is a $250 profit, not just $0. Open the Expert Files and pick your role.';
+    document.querySelectorAll("nav button").forEach(b => b.disabled = !tabOpen(b.dataset.tab));
+  } else $("g-msg").innerHTML = '<span class="pill bad">Not yet</span> ' + msg;
+});
+function renderCase(){
+  if (S.caseOk){ $("g-be").value = S.inputs.gbe || "1500"; $("g-pr").value = S.inputs.gpr || "-1250"; $("g-be").className = $("g-pr").className = "ok";
+    $("g-msg").innerHTML = '<span class="pill ok">Correct</span> She needs 1,500 burgers but sells 1,250: <b>250 burgers short</b>, losing <b>$1,250 a month</b>. Open the Expert Files and pick your role.'; }
+}
+
+/* ---------- 2 EXPERTS ---------- */
+const TEAMDATA = {
+  price: `<table><tr><th>Average burger price</th><th class="num">Burgers customers say they'd buy</th></tr>
+    <tr><td>$7</td><td class="num">1,700</td></tr><tr><td>$8 (today)</td><td class="num">1,250</td></tr><tr><td>$9</td><td class="num">1,060</td></tr><tr><td>$10</td><td class="num">890</td></tr></table>
+    <div class="small muted">Nearby: Patty Wagon truck $7.50 · Burger Barn $8.50 · Prime Grill (sit-down) $10.50</div>`,
+  food: `<table><tr><th>What goes into one burger today</th><th class="num">Cost</th></tr>
+    <tr><td>Bun</td><td class="num">$0.40</td></tr><tr><td>Beef patty</td><td class="num">$1.60</td></tr><tr><td>Cheese, lettuce, pickles, and sauce</td><td class="num">$0.70</td></tr><tr><td>Wrapper and napkin</td><td class="num">$0.30</td></tr><tr><td><b>Total</b></td><td class="num"><b>$3.00</b></td></tr></table>`,
+  energy: `<div class="small"><b>Science:</b> energy (kWh) = power (kW) × time (h). The truck's grill fans, fridge, and lights draw 2.5 kW for about 240 hours a month. The old generator burns $0.60 of gas per kWh and adds 1.2 kg of CO₂ per kWh. The new one burns $0.35 and adds 0.7 kg.</div>
+    <table><tr><th></th><th class="num">kWh / month</th><th class="num">Gas cost / month</th><th class="num">CO₂ / month</th></tr>
+    <tr><td>Old generator</td><td class="num" id="e-old">?</td><td class="num" id="e-oldc">?</td><td class="num" id="e-oldco">?</td></tr>
+    <tr><td>Inverter generator</td><td class="num" id="e-new">?</td><td class="num" id="e-newc">?</td><td class="num" id="e-newco">?</td></tr></table>`,
+  mkt: `<div class="small">Each option's monthly cost is added to fixed costs. Food cost stays $3.00 a burger and the price stays $8. Results come from similar food trucks.</div>`
+};
+const ROLEOPTS = {price:"$7 · $9 · $10 burger prices", food:"Bulk buns · new beef supplier · smaller burgers", energy:"Inverter generator · solar panel · dropping Sundays", mkt:"Instagram · Friday night events · flyers"};
+function pickRole(r){ S.role = r; if (r !== "board") S.team = r; S.fpane = "chart"; save(); document.querySelectorAll("nav button").forEach(b => b.disabled = !tabOpen(b.dataset.tab)); renderExperts(); updateHud(); }
+function renderPicker(){
+  $("picker").innerHTML = `<div><h2>Pick your role</h2><div class="muted">You are one of four experts. Verify your team's three options. When you finish, the Board Room opens with every team's cards so your board can build a plan together.</div></div>
+    <div class="roles">${Object.keys(CATS).map(c => `<button class="rolecard cat-${c}" data-role="${c}"><span class="role">${CATS[c].role}</span><h3>${CATS[c].name}</h3><div class="q">${CATS[c].q}</div><div class="opts">You test: ${ROLEOPTS[c]}</div></button>`).join("")}</div>
+`;
+  $("picker").querySelectorAll("[data-role]").forEach(b => b.onclick = () => pickRole(b.dataset.role));
+}
+function renderExperts(){
+  const picking = !S.role;
+  $("v-experts").classList.toggle("picking", picking);
+  $("picker").style.display = picking ? "flex" : "none";
+  $("teamnav").style.display = $("teams").style.display = picking ? "none" : "";
+  if (picking){ renderPicker(); return; }
+  const board = S.t.unlock;
+  if (!board) S.team = S.role;
+  const nav = $("teamnav");
+  nav.innerHTML = `<span class="modechip">Your role</span>` + Object.keys(CATS).map(c => {
+    const ids = CARDS.filter(k => k.cat === c), done = ids.filter(k => S.verified[k.id]).length, mine = board || c === S.role;
+    return `<button class="cat-${c}" data-team="${c}" aria-selected="${S.team === c}" ${mine ? "" : "disabled"}><span class="role">${CATS[c].role}</span><b>${CATS[c].name}</b><span class="prog">${mine ? done + " / " + ids.length + " verified" : "🔒 another expert's file"}</span></button>`;
+  }).join("") + `<div class="small muted" style="margin-top:4px">${roleDone() ? "<b>Role complete.</b> The Board Room is open with all 12 cards." : "Verify your three options to open the Board Room."}</div>
+    ${roleDone() ? '<button class="btn primary sm" id="gotoboard" style="align-self:flex-start">Open the Board Room →</button>' : ""}
+    <button class="btn sm" id="switchrole" style="margin-top:auto;align-self:flex-start">Switch role</button>`;
+  nav.querySelectorAll("[data-team]").forEach(b => b.onclick = () => { S.team = b.dataset.team; save(); renderExperts(); });
+  if ($("gotoboard")) $("gotoboard").onclick = () => show("board");
+  $("switchrole").onclick = () => { S.role = null; save(); document.querySelectorAll("nav button").forEach(b => b.disabled = !tabOpen(b.dataset.tab)); renderExperts(); updateHud(); };
+  const c = S.team, cards = CARDS.filter(k => k.cat === c), w = WARM[c];
+  const fixedNote = c === "price" ? "Fixed costs stay $7,500 and food cost stays $3.00 a burger." : c === "food" ? "Fixed costs stay $7,500 and the price stays $8." : c === "energy" ? "Price stays $8, food cost stays $3.00, and today's fixed costs are $7,500." : "";
+  $("teams").innerHTML = `<div class="team active cat-${c}">
+    <div class="left">
+      <div class="panel" style="display:flex;flex-direction:column;gap:6px"><span class="role">${CATS[c].role}</span><h2>${CATS[c].q}</h2><div class="small muted">${fixedNote}</div>${TEAMDATA[c]}
+        ${w ? `<div class="warm"><label class="field">${w.label}<input data-warm="${c}" value="${esc(S.inputs["w-"+c] || "")}" class="${S.warm[c] ? "ok" : ""}"></label><button class="btn sm" data-wcheck="${c}">Check</button><span class="small" id="wmsg-${c}">${S.warm[c] ? '<span class="pill ok">Correct</span>' : ""}</span></div>` : ""}
+      </div>
+      <div class="panel" style="flex:1;display:flex;flex-direction:column;gap:6px;min-height:0">
+        <div class="ftabs"><button data-fp="chart" aria-selected="${S.fpane !== "find"}">Graph</button><button data-fp="find" aria-selected="${S.fpane === "find"}">Findings Card ${cards.every(k => S.verified[k.id]) ? "✓" : "(" + cards.filter(k => S.verified[k.id]).length + "/3)"}</button></div>
+        ${S.fpane === "find" ? findingsHTML(c) : `<h3 id="tchart-t"></h3><div class="plot"><canvas id="cv-team"></canvas></div>`}</div>
+    </div>
+    <div class="cards">${cards.map(k => {
+      const done = !!S.verified[k.id];
+      return `<div class="ocard ${done ? "done" : ""}" data-card="${k.id}"><div class="top"><b>${k.label}</b>${done ? `<span class="pill ok">✓ Verified</span>` : k.cash ? `<span class="pill warn">${fmt$(k.cash)} up front</span>` : ""}</div>
+        <div class="desc">${k.desc}</div>
+        <div class="row">${cardChecks(k).map(f => `<label class="field">${f.label}<input data-f="${k.id}:${f.key}" value="${esc(S.inputs[k.id+":"+f.key] || "")}" class="${done ? "ok" : ""}" inputmode="decimal"></label>`).join("")}
+        <button class="btn sm ${done ? "" : "dark"}" data-vcheck="${k.id}">${done ? "Checked" : "Verify"}</button></div>
+        <div class="small" id="vmsg-${k.id}"></div></div>`; }).join("")}
+    </div></div>`;
+  $("teams").querySelectorAll("input").forEach(i => i.addEventListener("input", () => { const k = i.dataset.f || ("w-" + i.dataset.warm); S.inputs[k] = i.value; save(); }));
+  $("teams").querySelectorAll("[data-wcheck]").forEach(b => b.onclick = () => {
+    const cc = b.dataset.wcheck, inp = $("teams").querySelector(`[data-warm="${cc}"]`), ok = near(num(inp.value), WARM[cc].ans, WARM[cc].tol);
+    inp.className = ok ? "ok" : "bad"; S.warm[cc] = ok; save();
+    $("wmsg-" + cc).innerHTML = ok ? '<span class="pill ok">Correct</span>' : '<span class="pill bad">Try again</span>';
+    if (cc === "energy" && ok) drawTeam();
+  });
+  $("teams").querySelectorAll("[data-vcheck]").forEach(b => b.onclick = () => verify(b.dataset.vcheck));
+  $("teams").querySelectorAll("[data-fp]").forEach(b => b.onclick = () => { S.fpane = b.dataset.fp; save(); renderExperts(); });
+  if (S.fpane !== "find") drawTeam();
+}
+function findingsHTML(c){
+  const cards = CARDS.filter(k => k.cat === c), done = k => !!S.verified[k.id];
+  let rows;
+  if (c === "energy"){
+    const info = {cool:["$150 a month","16 months","$2,400"], led:["$60 a month","15 months","$900"], mon:["$150 a month (net)","right away","$0"]};
+    rows = `<tr><th>Option</th><th>Saves</th><th>Pays back in</th><th class="num">Up front</th></tr>` + cards.map(k => `<tr><td>${k.label}</td>${done(k) ? info[k.id].map((v,i) => `<td class="${i === 2 ? "num" : ""}">${v}</td>`).join("") : '<td colspan="3" class="muted">verify this option first</td>'}</tr>`).join("");
+  } else {
+    rows = `<tr><th>Option</th><th class="num">Break-even</th><th class="num">Burgers</th><th class="num">Profit</th><th class="num">vs. today</th><th class="num">Up front</th></tr>
+      <tr class="muted"><td>Today</td><td class="num">1,500</td><td class="num">1,250</td><td class="num">−$1,250</td><td class="num">–</td><td class="num">$0</td></tr>` +
+      cards.map(k => { const r = model([k.id]); return `<tr><td>${k.label}</td>${done(k) ? `<td class="num">${fmtN(r.beUp)}</td><td class="num">${fmtN(r.m)}</td><td class="num">${fmt$(r.profit)}</td><td class="num" style="font-weight:700;color:${r.profit > BASEM.profit ? "var(--green)" : "var(--red)"}">${sgn$(r.profit - BASEM.profit)}</td><td class="num">${fmt$(r.cash)}</td>` : '<td colspan="5" class="muted">verify this option first</td>'}</tr>`; }).join("");
+  }
+  const all = cards.every(done);
+  return `<table class="findings">${rows}</table>
+    <div class="small" style="margin-top:4px">${all ? `<span class="pill ok">Role complete</span> Copy these numbers onto your Findings Card, then open the Board Room. On paper, decide: <b>your best option</b>, <b>the biggest risk</b>, and <b>one thing you're unsure about</b>.` : "Verify all three options to finish your Findings Card."}</div>`;
+}
+function verify(id){
+  const k = CARD[id]; let all = true, hints = [];
+  cardChecks(k).forEach(f => {
+    const inp = document.querySelector(`[data-f="${id}:${f.key}"]`), v = num(inp.value), ok = near(v, f.ans, f.tol, f.alt);
+    inp.className = ok ? "ok" : "bad"; if (!ok){ all = false;
+      if (f.key === "be" && !isNaN(v) && Math.abs(v - model([id]).be) < 1) hints.push("Break-even: she can't sell part of a burger. Round to a whole number she can actually reach.");
+      else if (f.key === "pr" && near(-v, f.ans, f.tol)) hints.push("Profit: check the sign. Is she making or losing money?");
+      else if (f.key === "be") hints.push("Break-even: set revenue = cost, using this option's numbers.");
+      else if (f.key === "pr") hints.push("Profit: use the burgers she expects to sell with this option, not the break-even number.");
+      else if (f.key === "pay") hints.push("Payback: when does the money saved add up to the cost up front? Write a system with x = months.");
+      else if (f.key === "sav") hints.push("Savings: old monthly cost minus new monthly cost.");
+      else if (f.key === "mbe") hints.push("Sunday break-even: let x = Sunday burgers. Solve the system y = 8x and y = 500 + 3x.");
+      else if (f.key === "chg") hints.push("Change: what she saves by dropping Sundays, minus the profit she loses on Sunday burgers.");
+    }
+  });
+  if (all){ S.verified[id] = true;
+    const teamDone = CARDS.filter(x => x.cat === k.cat).every(x => S.verified[x.id]);
+    if (teamDone) S.fpane = "find";
+    save(); toast(teamDone ? "✓ Role complete! The Board Room is open." : "✓ " + k.label + " verified"); document.querySelectorAll("nav button").forEach(b => b.disabled = !tabOpen(b.dataset.tab)); renderExperts(); updateHud(); }
+  else $("vmsg-" + id).innerHTML = '<span class="pill bad">Not yet</span> ' + hints.join(" ");
+}
+function drawTeam(){
+  const cv = $("cv-team"); if (!cv) return; const c = S.team;
+  if (c === "energy"){
+    if (S.warm.energy){ [["e-old","600"],["e-oldc","$360"],["e-oldco","720 kg"],["e-new","600"],["e-newc","$210"],["e-newco","420 kg"]].forEach(([i,v]) => $(i) && ($(i).textContent = v)); }
+    $("tchart-t").textContent = "Payback: total cost over time, old generator vs. inverter generator";
+    const ctx = setup(cv); if (!ctx) return; const {g} = ctx;
+    const A = axes(ctx, {x0:0, x1:36, dx:6, y0:0, y1:15000, dy:3000, fy:y => "$" + y/1000 + "k", xl:"months", yl:"total spent"});
+    line(g, A, x => 360 * x, 0, 36, cssv("--chili"), 3); line(g, A, x => 2400 + 210 * x, 0, 36, cssv("--purple"), 3);
+    label(g, A.X(9), A.Y(3240) + 14, "keep old: y = 360x", cssv("--chili"));
+    label(g, A.X(3), A.Y(2400 + 630) - 14, "buy new: y = 2,400 + 210x", cssv("--purple"));
+    label(g, A.X(35), A.Y(1200), S.verified.cool ? "They cross at month 16: payback." : "Where do the lines cross? What does that month mean?", "#3d4452", null, "right");
+    return;
+  }
+  const ctx = setup(cv); if (!ctx) return; const {g} = ctx;
+  if (c === "price"){
+    $("tchart-t").textContent = "Each price makes a different revenue line. The cost line stays put.";
+    const A = axes(ctx, {x0:0, x1:2400, dx:400, y0:0, y1:25000, dy:5000, fy:y => "$" + y/1000 + "k", xl:"burgers", yl:"dollars"});
+    line(g, A, x => 7500 + 3*x, 0, 2400, cssv("--chili"), 3);
+    [[7,1700,"#9bb7f4"],[8,1250,"#b8bfcc"],[9,1060,"#4677e6"],[10,890,"#163a9e"]].forEach(([p,m,col]) => {
+      line(g, A, x => p*x, 0, 2400, col, 2.2);
+      g.fillStyle = col; g.beginPath(); g.arc(A.X(m), A.Y(p*m), 5, 0, 7); g.fill();
+      label(g, A.X(2400), A.Y(p*2400 > 24000 ? 24000 : p*2400) + (p===10?10:0), "$" + p, col, null, "right");
+    });
+    label(g, A.X(40), A.Y(23500), "Dots = burgers customers say they'd buy at that price", "#3d4452");
+  } else if (c === "food"){
+    $("tchart-t").textContent = "Where the $8 burger goes";
+    const rows = [["Today", 1.40, 1.60, 5.00], ["Bulk buns", 1.20, 1.60, 5.20], ["New beef supplier", 1.40, 1.10, 5.50], ["Smaller burgers", 1.10, 1.30, 5.60]];
+    const L = 130, W = ctx.w - L - 16, bh = Math.min(26, (ctx.h - 40) / 4 - 10);
+    rows.forEach((r, i) => {
+      const y = 12 + i * (bh + 12); g.fillStyle = "#3d4452"; g.textAlign = "right"; g.font = "600 12px DM Sans, system-ui, sans-serif"; g.fillText(r[0], L - 8, y + bh/2);
+      let x = L; [[r[1], "#f5b38a", "bun etc"], [r[2], cssv("--red"), "beef"], [r[3], cssv("--green"), "left over"]].forEach(([v, col, nm]) => {
+        const w = v / 8 * W; g.fillStyle = col; g.fillRect(x, y, w, bh); g.fillStyle = "#fff"; g.textAlign = "center"; g.font = "600 11px DM Sans, system-ui, sans-serif";
+        if (w > 36) g.fillText("$" + v.toFixed(2), x + w/2, y + bh/2); x += w; });
+    });
+    g.textAlign = "left"; g.font = "11px DM Sans, system-ui, sans-serif"; let lx = 8;
+    [["#f5b38a","bun, toppings, wrapper"],[cssv("--red"),"beef"],[cssv("--green"),"left over to pay fixed bills"]].forEach(([col,t]) => { g.fillStyle = col; g.fillRect(lx, ctx.h - 15, 10, 10); g.fillStyle = "#5e6675"; g.fillText(t, lx + 14, ctx.h - 10); lx += g.measureText(t).width + 30; });
+  } else if (c === "mkt"){
+    $("tchart-t").textContent = "Extra burgers each option brings in";
+    const opts = [["Flyers", 15, 100], ["Instagram", 90, 300], ["Events", 200, 600]];
+    const L = 90, W = ctx.w - L - 20, bh = Math.min(30, (ctx.h - 40) / 3 - 14);
+    opts.forEach((o, i) => {
+      const y = 14 + i * (bh + 16); g.fillStyle = "#3d4452"; g.textAlign = "right"; g.font = "600 12px DM Sans, system-ui, sans-serif"; g.fillText(o[0], L - 8, y + bh/2);
+      const w = o[1] / 260 * W; g.fillStyle = cssv("--pink"); g.fillRect(L, y, w, bh);
+      g.fillStyle = "#3d4452"; g.textAlign = "left"; g.fillText("+" + o[1] + " burgers · costs " + fmt$(o[2]) + "/mo", L + w + 6, y + bh/2);
+    });
+    g.fillStyle = "#5e6675"; g.font = "11px DM Sans, system-ui, sans-serif"; g.textAlign = "left";
+    g.fillText("How many extra burgers does each option need just to pay for itself?", 8, ctx.h - 10);
+  }
+}
+
+/* ---------- 3 BOARD ---------- */
+let anim = {p:BASE.p, c:BASE.c, F:BASE.F, m:BASE.m, be:BASEM.be}, animT = null;
+function target(){ return model(S.slots); }
+function renderMenu(){
+  $("menu").innerHTML = `<div class="small muted" style="font-weight:600">Change menu · tap a card to add it</div>` +
+    Object.keys(CATS).map(c => `<div class="cat-${c}" style="display:flex;flex-direction:column;gap:4px"><h4>${CATS[c].name}${c === "price" ? " · today $8" : ""}</h4>${c === "price" ? '<div style="display:flex;gap:4px">' : ""}${CARDS.filter(k => k.cat === c).map(k => {
+      const v = isVerified(k.id), inn = S.slots.includes(k.id);
+      const eff = [k.price ? "p = $" + k.price : "", k.dc ? "c " + (k.dc > 0 ? "+" : "−") + "$" + Math.abs(k.dc).toFixed(2) : "", k.dF ? "F " + sgn$(k.dF) : "", k.dm ? "burgers " + (k.dm > 0 ? "+" : "−") + Math.abs(k.dm) : "", k.cash ? fmt$(k.cash) + " up front" : ""].filter(Boolean).join(" · ");
+      if (c === "price") return `<button class="mcard ${inn ? "in" : ""} ${v ? "" : "locked"}" data-add="${k.id}" style="flex:1;justify-content:center;text-align:center;padding:3px 2px;white-space:nowrap"><span><span class="lab">${v ? "" : "🔒 "}$${k.price}</span><br><span class="eff">${k.dm > 0 ? "+" : "−"}${Math.abs(k.dm)} burgers</span></span></button>`;
+      return `<button class="mcard ${inn ? "in" : ""} ${v ? "" : "locked"}" data-add="${k.id}" ${v ? "" : 'title="Verify this option in the Expert Files first"'}><span><span class="lab">${k.label}</span><br><span class="eff">${v ? eff : "🔒 finish your role first"}</span></span><span>${inn ? "✓" : v ? "+" : ""}</span></button>`; }).join("")}${c === "price" ? "</div>" : ""}</div>`).join("");
+  $("menu").querySelectorAll("[data-add]").forEach(b => b.onclick = () => toggleCard(b.dataset.add));
+}
+function toggleCard(id){
+  if (!isVerified(id)){ toast("Finish your role in the Expert Files first"); return; }
+  const i = S.slots.indexOf(id);
+  if (i >= 0) S.slots.splice(i, 1);
+  else {
+    const same = S.slots.findIndex(s => CARD[s].cat === CARD[id].cat);
+    if (same >= 0){ S.slots[same] = id; toast("Swapped: only one " + CATS[CARD[id].cat].name + " option at a time"); }
+    else if (S.slots.length >= S.maxSlots){ toast(S.maxSlots === 2 ? "Marisol only wants two changes. Remove one, or ask her for another." : "All slots are full. Remove one first."); return; }
+    else S.slots.push(id);
+  }
+  save(); renderBoard(true);
+}
+function rulesFor(ids){
+  const r = model(ids), cats = ids.map(i => CARD[i].cat);
+  return [
+    {ok: ids.length <= 2 ? true : ids.length <= S.maxSlots, txt: ids.length <= 2 ? "Two changes or fewer" : "Extra change approved by Marisol"},
+    {ok: r.cash <= CASHMAX, txt: "Up-front cash: " + fmt$(r.cash) + " of " + fmt$(CASHMAX)},
+    {ok: new Set(cats).size === cats.length, txt: "One option per team"},
+    {ok: ids.length ? (canSee(keyOf(ids)) ? r.profit >= GOAL : null) : null, txt: "Profit of at least " + fmt$(GOAL) + (ids.length && !canSee(keyOf(ids)) ? " (calculate to find out)" : "")}
+  ];
+}
+function renderBoard(animate){
+  renderMenu();
+  const ids = S.slots, key = keyOf(ids), r = target(), see = canSee(key);
+  $("updbanner").innerHTML = "";
+  $("slotcount").textContent = ids.length + " of " + S.maxSlots + " slots";
+  let sh = "";
+  for (let i = 0; i < Math.max(S.maxSlots, 2); i++){
+    const id = ids[i];
+    sh += id ? `<div class="slot filled cat-${CARD[id].cat}"><span>${CARD[id].label}</span><button data-rm="${id}" aria-label="Remove ${CARD[id].label}">×</button></div>` : `<div class="slot">Empty: pick from the change menu</div>`;
+  }
+  $("slots").innerHTML = sh;
+  $("slots").querySelectorAll("[data-rm]").forEach(b => b.onclick = () => toggleCard(b.dataset.rm));
+  const twos = S.log.filter(l => l.ids.length === 2).length;
+  $("petition").style.display = S.maxSlots < 4 ? "" : "none";
+  $("petition").disabled = S.maxSlots === 2 && twos < 3;
+  $("petition").title = $("petition").disabled ? "Test and log at least 3 two-change packages first" : "";
+  $("petition").textContent = $("petition").disabled ? "✋ Ask for another change (log 3 two-change packages first: " + twos + "/3)" : "✋ Ask Marisol for another change";
+  $("rules").innerHTML = rulesFor(ids).map(x => `<div class="${x.ok === null ? "na" : x.ok ? "ok" : "no"}"><span class="dot">${x.ok === null ? "?" : x.ok ? "✓" : "✕"}</span>${x.txt}</div>`).join("");
+  /* predict panel */
+  const ruleOK = rulesFor(ids).slice(0,3).every(x => x.ok);
+  let ph = `<h3>${ids.length ? (see ? "Package checked ✓" : "Calculate this package") : "Today's numbers"}</h3><!--RES-->`;
+  if (ids.length && !see){
+    ph += `<div class="small muted">Write and solve this package's system, then check.</div>
+      <div class="row"><label class="field">Break-even (burgers)<input id="pd-be" inputmode="decimal"></label><label class="field">Profit / month ($)<input id="pd-pr" inputmode="decimal"></label></div>
+      <div class="row"><button class="btn primary" id="pd-go">Check and log</button><span class="small" id="pd-msg"></span></div>`;
+  }
+  const res = `<div class="results" style="grid-template-columns:repeat(4,1fr)">
+    <div class="stat"><div class="k">Price p</div><div class="v">${fmt$(r.p, true)}</div></div>
+    <div class="stat"><div class="k">Food c</div><div class="v">${fmt$(r.c, true)}</div></div>
+    <div class="stat"><div class="k">Fixed F</div><div class="v">${fmt$(r.F)}</div></div>
+    <div class="stat"><div class="k">Burgers</div><div class="v">${fmtN(r.m)}</div></div></div>`;
+  ph = ph.replace("<!--RES-->", res);
+  if (see || !ids.length) ph += `<div class="results" style="grid-template-columns:1fr 1fr">
+    <div class="stat"><div class="k">Break-even</div><div class="v">${isFinite(r.be) ? fmtN(r.beUp) + " burgers" : "never"}</div></div>
+    <div class="stat"><div class="k">Profit / month</div><div class="v ${r.profit >= 0 ? "pos" : "neg"}">${fmt$(r.profit)}</div></div></div>`;
+  if (!ids.length || see){
+    const canLock = ids.length && see && ruleOK, same = S.plan && keyOf(S.plan) === key;
+    ph += `<button class="btn dark" id="lock" ${canLock ? "" : "disabled"} style="margin-top:auto">${same ? "This is your plan · open the report" : S.plan ? "Make this our plan instead" : "Send this plan to Marisol"} →</button>`;
+    if (ids.length && !canLock) ph += `<div class="small muted">This package breaks one of Marisol's rules.</div>`;
+  }
+  $("predict").innerHTML = ph;
+  if ($("pd-go")) $("pd-go").onclick = reveal;
+  if ($("lock")) $("lock").onclick = lockPlan;
+  /* log */
+  $("logcount").textContent = S.log.length ? "(" + S.log.length + ")" : "";
+  $("logwrap").innerHTML = S.log.length ? `<table><tr><th>Package</th><th class="num">p</th><th class="num">c</th><th class="num">F</th><th class="num">Burgers</th><th class="num">Break-even</th><th class="num">Profit</th><th class="num">Cash</th></tr>` +
+    S.log.map(l => `<tr><td>${l.ids.map(i => CARD[i].label).join(" + ")}</td><td class="num">${fmt$(l.p,true)}</td><td class="num">${fmt$(l.c,true)}</td><td class="num">${fmt$(l.F)}</td><td class="num">${fmtN(l.m)}</td><td class="num">${fmtN(l.beUp)}</td><td class="num" style="color:${l.profit >= 0 ? "var(--green)" : "var(--red)"};font-weight:700">${fmt$(l.profit)}</td><td class="num">${fmt$(l.cash)}</td></tr>`).join("") + "</table>"
+    : `<div class="muted" style="padding:20px">Every package you calculate correctly is saved here. Copy this table into Step 3 of your Board Meeting handout.</div>`;
+  document.querySelectorAll(".subtabs button").forEach(b => b.setAttribute("aria-selected", b.dataset.sub === S.sub));
+  $("sub-graph").style.display = S.sub === "graph" ? "" : "none"; $("sub-log").style.display = S.sub === "log" ? "" : "none";
+  tweenTo(r, animate);
+}
+document.querySelectorAll(".subtabs button").forEach(b => b.onclick = () => { S.sub = b.dataset.sub; save(); renderBoard(false); });
+function reveal(){
+  const ids = S.slots, key = keyOf(ids), r = model(ids);
+  const beIn = $("pd-be"), prIn = $("pd-pr"), be = num(beIn.value), pr = num(prIn.value);
+  if (isNaN(be) || isNaN(pr)){ $("pd-msg").innerHTML = '<span class="pill bad">Enter both</span>'; return; }
+  const okBe = near(be, r.beUp, 0.5, [Math.round(r.be * 10) / 10]), okPr = near(pr, r.profit, 1);
+  beIn.className = okBe ? "ok" : "bad"; prIn.className = okPr ? "ok" : "bad";
+  if (!(okBe && okPr)){
+    const h = [];
+    if (!okBe) h.push(!isNaN(be) && Math.abs(be - r.be) < 1 ? "Break-even: round up to a whole burger." : "Break-even: set p·x = F + c·x with this package's numbers.");
+    if (!okPr) h.push(near(-pr, r.profit, 1) ? "Profit: check the sign." : "Profit: (p − c) × burgers − F, using the expected burgers.");
+    $("pd-msg").innerHTML = '<span class="pill bad">Not yet</span> ' + h.join(" ");
+    return;
+  }
+  S.revealed[key] = true;
+  S.log = S.log.filter(l => keyOf(l.ids) !== key);
+  S.log.push(Object.assign({ids:ids.slice()}, r)); save();
+  toast("✓ Correct. Package logged.");
+  renderBoard(false);
+}
+function lockPlan(){
+  S.plan = S.slots.slice(); save(); show("report");
+}
+function tweenTo(r, animate){
+  const from = Object.assign({}, anim), to = {p:r.p, c:r.c, F:r.F, m:r.m};
+  cancelAnimationFrame(animT);
+  const t0 = performance.now(), dur = animate ? 550 : 0;
+  const step = now => {
+    const t = dur ? Math.min(1, (now - t0) / dur) : 1, e = 1 - Math.pow(1 - t, 3);
+    ["p","c","F","m"].forEach(k => anim[k] = from[k] + (to[k] - from[k]) * e);
+    anim.be = anim.p - anim.c > 0 ? anim.F / (anim.p - anim.c) : Infinity;
+    drawBoard(t === 1);
+    if (t < 1) animT = requestAnimationFrame(step);
+  };
+  animT = requestAnimationFrame(step);
+}
+function drawBoard(final){
+  const key = keyOf(S.slots), see = canSee(key) || !S.slots.length;
+  if (S.sub === "graph") breakEvenGraph($("cv-main"), anim, {base:true, show:see, eq:true});
+  /* waterfall */
+  const ctx = setup($("cv-water"));
+  if (ctx){
+    const {g, w, h} = ctx, steps = [{lab:"Today", v:BASEM.profit, abs:true}];
+    let acc = []; S.slots.forEach(id => { const before = model(acc).profit; acc = acc.concat(id); steps.push({lab:CARD[id].label, v:model(acc).profit - before, cat:CARD[id].cat}); });
+    steps.push({lab:"Total", v:model(S.slots).profit, abs:true, tot:true});
+    const lo = -2000, hi = 1000, L = 8, Bm = 30, T = 8, Yy = v => T + (hi - v) / (hi - lo) * (h - T - Bm);
+    g.strokeStyle = "#5e6675"; g.beginPath(); g.moveTo(0, Yy(0)); g.lineTo(w, Yy(0)); g.stroke();
+    g.fillStyle = "#5e6675"; g.textAlign = "left"; g.fillText("$0", 2, Yy(0) - 7);
+    const n = steps.length, bw = Math.min(70, (w - L*2) / n - 12);
+    let run = 0;
+    steps.forEach((s, i) => {
+      const x = L + 24 + i * ((w - L*2 - 24) / n);
+      let y0, y1; if (s.abs){ y0 = 0; y1 = s.v; run = s.v; } else { y0 = run; y1 = run + s.v; run = y1; }
+      const col = s.abs ? (s.v >= 0 ? cssv("--green") : cssv("--red")) : cssv(s.cat === "price" ? "--teal" : s.cat === "food" ? "--chili" : s.cat === "energy" ? "--purple" : "--pink");
+      g.fillStyle = col; g.globalAlpha = s.abs ? .85 : .9;
+      const top = Yy(Math.max(Math.max(y0, y1), lo)), bot = Yy(Math.max(Math.min(y0, y1), lo));
+      g.fillRect(x, top, bw, Math.max(2, bot - top)); g.globalAlpha = 1;
+      g.fillStyle = "#2b2118"; g.textAlign = "center"; g.font = "600 11px DM Sans, system-ui, sans-serif";
+      const t = (s.abs ? "" : s.v >= 0 ? "+" : "") + (see || (i === 0) ? fmt$(s.v) : "?");
+      g.fillText(t, x + bw/2, (s.v >= 0 && !s.abs) || (s.abs && s.v >= 0) ? top - 8 : bot + 9 > h - Bm ? top - 8 : bot + 9);
+      g.fillStyle = "#5e6675"; g.font = "10px DM Sans, system-ui, sans-serif"; const words = s.lab.length > 11 ? s.lab.slice(0, 10) + "…" : s.lab; g.fillText(words, x + bw/2, h - 12);
+    });
+    if (S.slots.length === 0){ g.fillStyle = "#5e6675"; g.textAlign = "left"; g.fillText("Add changes to see what each one is worth.", L + 110, Yy(500)); }
+  }
+  /* gap line */
+  const c2 = setup($("cv-gap"));
+  if (c2){
+    const {g, w, h} = c2, x0 = 1000, x1 = 2200, X = v => 14 + (Math.max(x0, Math.min(x1, v)) - x0) / (x1 - x0) * (w - 28), y = h/2 + 4;
+    g.strokeStyle = "#b8bfcc"; g.lineWidth = 2; g.beginPath(); g.moveTo(14, y); g.lineTo(w - 14, y); g.stroke();
+    g.fillStyle = "#5e6675"; g.textAlign = "center"; for (let v = x0; v <= x1; v += 200){ g.fillRect(X(v) - .5, y - 4, 1, 8); g.globalAlpha=.75; g.fillText(fmtN(v), X(v), y + 13); g.globalAlpha=1; }
+    const be = anim.be, m = anim.m, ok = m >= be;
+    g.strokeStyle = ok ? cssv("--green") : cssv("--red"); g.lineWidth = 6; g.globalAlpha = .5; g.beginPath(); g.moveTo(X(be), y); g.lineTo(X(m), y); g.stroke(); g.globalAlpha = 1;
+    g.fillStyle = cssv("--ink"); g.beginPath(); g.moveTo(X(be), y - 6); g.lineTo(X(be) - 6, y - 16); g.lineTo(X(be) + 6, y - 16); g.fill();
+    g.fillStyle = cssv("--teal"); g.beginPath(); g.arc(X(m), y, 6, 0, 7); g.fill();
+    g.font = "600 11px DM Sans, system-ui, sans-serif"; g.fillStyle = cssv("--ink");
+    g.textAlign = "left"; g.fillStyle = cssv("--ink"); g.fillText("▼ needed", 14, 9); g.fillStyle = cssv("--teal"); g.fillText("● expected", 76, 9);
+    g.textAlign = "right"; g.fillStyle = ok ? cssv("--green") : cssv("--red");
+    if (final) g.fillText(see ? (ok ? "ahead by " : "short by ") + fmtN(Math.abs(Math.round(m - Math.ceil(be - 1e-9)))) + " burgers" : (ok ? "ahead" : "short") + " by ? burgers", w - 14, 10);
+  }
+  /* burger bar */
+  const c3 = setup($("cv-burger"));
+  if (c3){
+    const {g, w, h} = c3, W = w - 8, cc = anim.c / 10 * W, mm = Math.max(0, anim.p - anim.c) / 10 * W;
+    g.fillStyle = "#f5b38a"; g.fillRect(4, 4, cc, h - 18); g.fillStyle = cssv("--green"); g.fillRect(4 + cc, 4, mm, h - 18);
+    g.fillStyle = "#fff"; g.font = "600 11px DM Sans, system-ui, sans-serif"; g.textAlign = "center";
+    g.fillText("food " + fmt$(anim.c, true), 4 + cc/2, 4 + (h - 18)/2); if (mm > 120) g.fillText("left over per burger " + fmt$(anim.p - anim.c, true), 4 + cc + mm/2, 4 + (h - 18)/2);
+    g.fillStyle = "#5e6675"; g.textAlign = "left"; g.font = "10.5px DM Sans, system-ui, sans-serif"; g.fillText("one burger at " + fmt$(anim.p, true) + " (bar scale: $10)", 4, h - 6);
+  }
+}
+$("petition").onclick = () => {
+  const n = S.maxSlots + 1;
+  $("modalbox").innerHTML = `<h2>Ask Marisol for change #${n}</h2>
+    <p class="small" style="margin:0">"I said ${S.maxSlots === 2 ? "two" : "three"} changes because I'm one person running a kitchen. Convince me. Use your numbers."</p>
+    <textarea id="pt" placeholder="Your best ${S.maxSlots}-change package gets her to ___, which is still ___. Adding ___ would ___ because ___."></textarea>
+    <div class="small muted" id="ptmsg">Your argument needs at least two sentences and at least one number from your package log.</div>
+    <div class="row" style="justify-content:flex-end"><button class="btn" id="pt-x">Cancel</button><button class="btn primary" id="pt-go">Send to Marisol</button></div>`;
+  $("modal").classList.add("show");
+  $("pt-x").onclick = () => $("modal").classList.remove("show");
+  $("pt-go").onclick = () => {
+    const t = $("pt").value.trim();
+    if (t.length < 80 || !/\d/.test(t) || (t.match(/[.!?](\s|$)/g) || []).length < 2){ $("ptmsg").innerHTML = '<span class="pill bad">Not convinced yet</span> Two or more sentences, with at least one number from your evidence.'; return; }
+    S.petitions.push(t); S.maxSlots = n; save(); $("modal").classList.remove("show");
+    toast("Marisol: \"Okay. One more, but show me it works.\""); renderBoard(false);
+  };
+};
+
+
+/* ---------- 5 REPORT ---------- */
+["rp-1","rp-2","rp-3"].forEach((id, i) => { const k = "abc"[i]; $(id).value = S.report[k] || ""; $(id).addEventListener("input", () => { S.report[k] = $(id).value; save(); }); });
+function renderReport(){
+  if (!S.plan) return; const r = model(S.plan);
+  $("rp-plan").innerHTML = `<div class="small muted" style="font-weight:700;letter-spacing:.06em;text-transform:uppercase">Consulting report</div><h2>Our plan for Mari's Smash Burgers</h2>
+    <input id="rp-team" placeholder="Team name" value="${esc(S.report.team || "")}" style="width:100%;border:1.5px solid var(--line);border-radius:8px;padding:5px 8px">
+    <div>${S.plan.map(i => `<span class="pill" style="background:var(--line);margin:2px 2px 0 0">${CARD[i].label}</span>`).join("")}</div>
+    <table><tr><td>Revenue</td><td class="num">y = ${r.p}x</td></tr><tr><td>Cost</td><td class="num">y = ${fmtN(r.F)} + ${r.c.toFixed(2)}x</td></tr>
+    <tr><td>Break-even</td><td class="num">${fmtN(r.beUp)} burgers</td></tr><tr><td>Expected burgers</td><td class="num">${fmtN(r.m)}</td></tr>
+    <tr><td>Cushion above break-even</td><td class="num">${fmtN(r.m - r.beUp)} burgers</td></tr>
+    <tr><td>Profit per month</td><td class="num" style="font-weight:700;color:${r.profit >= 0 ? "var(--green)" : "var(--red)"}">${fmt$(r.profit)}</td></tr>
+    <tr><td>Cash up front</td><td class="num">${fmt$(r.cash)}</td></tr></table>
+    <div class="row" style="margin-top:auto"><button class="btn sm" id="rp-back">← Back to Board Room</button><button class="btn sm" id="rp-copy">Copy report</button><button class="btn sm dark" id="rp-pres">Full screen</button></div>`;
+  $("rp-team").oninput = e => { S.report.team = e.target.value; save(); };
+  $("rp-back").onclick = () => show("board");
+  $("rp-copy").onclick = () => {
+    const txt = [`Consulting report for Mari's Smash Burgers — Team ${S.report.team || "___"}`, "Plan: " + S.plan.map(i => CARD[i].label).join(" + "),
+      `Revenue: y = ${r.p}x · Cost: y = ${fmtN(r.F)} + ${r.c.toFixed(2)}x`, `Break-even: ${fmtN(r.beUp)} burgers · Expected: ${fmtN(r.m)} · Profit: ${fmt$(r.profit)}/month · Cash up front: ${fmt$(r.cash)}`,
+      "Packages tested: " + S.log.map(l => l.ids.map(i => CARD[i].label).join(" + ") + " (" + fmt$(l.profit) + ")").join("; "),
+      "", "Recommendation: " + (S.report.a || ""), "Why not the others: " + (S.report.b || ""), "Weakest assumption: " + (S.report.c || "")].join("\n");
+    (navigator.clipboard ? navigator.clipboard.writeText(txt) : Promise.reject()).then(() => toast("Report copied"), () => toast("Copy didn't work here. Select the text and copy it instead."));
+  };
+  $("rp-pres").onclick = () => { try { document.documentElement.requestFullscreen(); } catch(e){} };
+  const planKey = keyOf(S.plan);
+  $("rp-log").innerHTML = `<table><tr><th>Package</th><th class="num">Break-even</th><th class="num">Burgers</th><th class="num">Profit</th></tr>` +
+    S.log.slice().sort((a, b) => b.profit - a.profit).map(l => `<tr style="${keyOf(l.ids) === planKey ? "background:var(--mari-l);font-weight:700" : ""}"><td>${l.ids.map(i => CARD[i].label).join(" + ")}${keyOf(l.ids) === planKey ? " ★" : ""}</td><td class="num">${fmtN(l.beUp)}</td><td class="num">${fmtN(l.m)}</td><td class="num" style="color:${l.profit >= 0 ? "var(--green)" : "var(--red)"};font-weight:700">${fmt$(l.profit)}</td></tr>`).join("") + "</table>";
+  breakEvenGraph($("cv-rbe"), Object.assign({}, r), {base:true, show:true, eq:true});
+}
+
+/* ---------- teacher ---------- */
+$("tbtn").onclick = () => $("tpanel").classList.toggle("show");
+$("t-unlock").checked = S.t.unlock; $("t-nums").checked = S.t.nums;
+$("t-unlock").onchange = e => { S.t.unlock = e.target.checked; save(); show(S.tab); updateHud(); };
+$("t-nums").onchange = e => { S.t.nums = e.target.checked; save(); render(); };
+$("t-reset").onclick = () => { const b = $("t-reset");
+  if (b.dataset.armed){ try { localStorage.removeItem(STORE); } catch(e){} S = fresh(); anim = {p:BASE.p, c:BASE.c, F:BASE.F, m:BASE.m, be:BASEM.be}; ["rp-1","rp-2","rp-3","g-be","g-pr"].forEach(i => { $(i).value = ""; $(i).className = ""; }); $("g-msg").innerHTML = ""; $("t-unlock").checked = $("t-nums").checked = false; delete b.dataset.armed; b.textContent = "Reset everything"; $("tpanel").classList.remove("show"); show("case"); toast("Progress erased"); return; }
+  b.dataset.armed = "1"; b.textContent = "Click again to erase all progress"; setTimeout(() => { delete b.dataset.armed; b.textContent = "Reset everything"; }, 4000); };
+document.addEventListener("click", e => { if (!e.target.closest("#tpanel") && !e.target.closest("#tbtn")) $("tpanel").classList.remove("show"); });
+
+function updateHud(){
+  const n = CARDS.filter(k => isVerified(k.id)).length;
+  if (S.role && !roleDone() && !S.t.unlock){ const mine = CARDS.filter(k => k.cat === S.role); $("hud-cards").textContent = CATS[S.role].name + ": " + mine.filter(k => S.verified[k.id]).length + " / 3 verified"; }
+  else $("hud-cards").textContent = n + " / 12 cards";
+}
+function render(){
+  updateHud();
+  if (S.tab === "case") renderCase();
+  if (S.tab === "experts") renderExperts();
+  if (S.tab === "board") renderBoard(false);
+  if (S.tab === "report") renderReport();
+}
+let rz; window.addEventListener("resize", () => { clearTimeout(rz); rz = setTimeout(render, 120); });
+if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => render());
+renderCase();
+show(S.tab);
+window.__S = () => S; window.__model = model;
+})();
+</script>
+</body>
+</html>
